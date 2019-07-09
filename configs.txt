@@ -1,0 +1,12 @@
+challenge ID 1 (1-7) : worker (issue: why worker 2 didn't work?) time took : 1.23
+same (1-15) worker: 2.18
+same (1mod8):2.24
+same (1mod16): didn't work with workr- try worker2
+
+ID 5: (1mod8) 2.53
+same (1-15) 1.99
+same (1-7) 1.88
+
+ID45: (1mod8) 8.83
+same (1-15): 8.78
+same (1-7): 6.97
