@@ -13,8 +13,8 @@ import scipy.stats
 import math 
 from scipy.stats import binom
 
+# The following is needed to interact with RLWE challenges
 import ChallInstParser
-
 
 from sage.all import *
 from sage.modules.free_module_integer import IntegerLattice
@@ -24,92 +24,48 @@ from sage.matrix.constructor import random_unimodular_matrix
 matrix_space = sage.matrix.matrix_space.MatrixSpace(ZZ, 4)
 A = random_unimodular_matrix(matrix_space);
 
-# Data for NTT By Huijing
-'''
-n = 4, q = 17
-omega = 4 or 13
------------------------------------------------------
-n = 16, q = 97
-omega = 8, 12, 18, 27, 70, 79, 85, or 89
-------------------------------------------------------
-n = 32, q = 193
-omega = 8, 14, 23, 24, 42, 67, 69, 72, 121, 124, 126, 151, 169, 170, 179, or 185
--------------------------------------------------------
-n = 64, q = 257
-omega = 11, 22, 23, 35, 44, 46, 67, 70, 73, 81, 88, 92, 95, 111, 117, 123, 134, 140, 146, 162, 165, 169, 176, 184, 187, 190, 211, 213, 222, 234, 235, or 246
-'''
 
-# for 2nth root
-'''
-n = 4, q = 17
-omega = 8
-------------------------------------------------------
-n = 8, q = 17
-omega = 10
------------------------------------------------------
-n = 16, q = 97
-omega = 19
-------------------------------------------------------
-n = 32, q = 193
-omega = 11
--------------------------------------------------------
-n = 64, q = 257
-omega = 9
--------------------------------------------------------
-n = 128, q = 257
-omega = -
--------------------------------------------------------
-n = 256, q = 7681
-omega = -
--------------------------------------------------------
-n = 512, q = 12289
-omega = -
--------------------------------------------------------
-n = 1024, q = 12289
-omega = 7
-'''
-
+# Place holder for some of the values needed by every function
 n = 1024;
 q = 12289;
 leakRate = 0.25;
+
 R = Integers(q)
 Q = PolynomialRing(R, 'y')
 S = Q.quo(Q.gen() ** (n) + 1, 'x')
 
-# For 1-15 mod 16 
-#Threshold = 7e-8;
-# For 1 mod 8
-#Threshold = 7e-4;
+# Place holder for Threshold 
+# ** Important: Set Therehold according to table in paper ** #
 Threshold = 0;
 
-# n =16
-# Omega = R(1212)
-# n = 8
-# Omega = R(722)
-# n = 1024
+# Default Omega for NTT transform used in NewHope
 Omega = R(7)
 
+# Parameter used in Binomial Sampling
 BinomParam = 8
-precision = 6
-NUMBERofMEASUREMENT = 10000
+
+# Subtract two list
 multisub = lambda a, b: map(operator.sub, a, b)
 
 # Sampling Parameter of Error
 mu = 0
 sigma = math.sqrt(8)
 
+# Sampling Distribution which is supported
 SAMPLINGS = ['Gaussian', 'Binomial']
 sampling = 'Gaussian'
 
-verbose = 0
-
-PATTERNS = ['1mod8', '1-7mod16', '1-15mod16']
+# The Leakage patterns that are supported
+PATTERNS = ['1mod8', '1-7mod16', '1-15mod16', '1mod16']
 leakPattern = '1mod8'
 
-
+# We look at RLWE Challenges and parameters by NewHope
 MODES = ['Challenges','NewHope']
 mode = 'Challenges'
 
+# setting verbose = 1 will print all the details 
+# when running the attack
+verbose = 0
 if verbose:
 	def verboseprint(*args):
 		# Print each argument separately so caller doesn't need to
@@ -120,8 +76,8 @@ if verbose:
 else:
 	verboseprint = lambda *a: None  # do-nothing function
 
-
 def find_omega():
+	# Find all the 2n-th root of unity and return the list of them
 	res = []
 	for i in range(q):
 		if sq_mult(i, n, q) == q - 1 and sq_mult(i, 2 * n, q) == 1:
@@ -132,23 +88,29 @@ def find_omega():
 def binom_sample():
 	# sample n element which are from Binomial Distribution with given 
 	# parameter in BinomParam
-	l = list(np.random.binomial( BinomParam * 2 , 0.5, n ) - BinomParam )
-	return l
+	return list(np.random.binomial( BinomParam * 2 , 0.5, n ) - BinomParam )
 
 
 def gauss_sample():
 	# Sample n element from Gaussian Distribution with given 
-	# parameter
+	# parameter of mu and sigma, mu is 0 in our application
+	# We first sample from Gaussian distribution and then 
+	# round it to closest integer
 	return np.rint(np.random.normal(mu, sigma, n)).tolist()
 
 
 def sq_mult(base, exponent, modulus):
+	# Raising a number to power might take a long time,
+	# so we use square and multiply algorithm to raise
+	# a number to a power and take modulus at the end
+	
 	# Converting the exponent to its binary form
 	binaryExponent = []
 	while exponent != 0:
 		binaryExponent.append(exponent % 2)
 		exponent = exponent / 2
-	# Appllication of the square and multiply algorithm
+	
+	# Applying of the square and multiply algorithm
 	result = 1
 	binaryExponent.reverse()
 	for i in binaryExponent:
@@ -156,7 +118,6 @@ def sq_mult(base, exponent, modulus):
 			result = (result * result) % modulus
 		else:
 			result = (result * result * base) % modulus
-		# print i,"\t",result
 	return result
 
 
@@ -832,6 +793,7 @@ def main():
 	# Depending on the pattern we set the Threshold as follows
 	# Threhold is being used as a factor which determines whether
 	# a recovered answer should be accepted or not
+	# ** Important: Set Therehold according to table in paper ** #
 	global Threshold
 	if leakPattern == '1-7mod16' or leakPattern == '1-15mod16': 
 		Threshold = 7e-8;
