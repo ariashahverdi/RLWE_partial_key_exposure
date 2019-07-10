@@ -11,4 +11,10 @@ ID45: (1mod8) 8.83
 same (1-15): 8.78
 same (1-7): 6.97
 
+Id85 (1-7mod16) 2682
+ID85 (1-15mod16) 1991
+same (1mod8)
 
+ID89 (1-7mod16)
+ID89 (1-15mod16)
+same (1mod8)
